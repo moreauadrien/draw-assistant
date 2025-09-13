@@ -1,8 +1,8 @@
-
 shape_schema = {
     "type": "array",
     "items": {
         "oneOf": [
+            # CIRCLE
             {
                 "type": "object",
                 "properties": {
@@ -14,32 +14,71 @@ shape_schema = {
                             "x": {"type": "number"},
                             "y": {"type": "number"}
                         },
-                        "required": ["x", "y"]
+                        "required": ["x", "y"],
+                        "additionalProperties": False
                     },
-                    "radius": {"type": "number", "minimum": 0}
+                    "radius": {"type": "number", "exclusiveMinimum": 0}
                 },
                 "required": ["type", "color", "center", "radius"],
                 "additionalProperties": False
             },
+
+            # RECTANGLE
             {
-                "type": "object",
-                "properties": {
-                    "type": {"const": "rectangle"},
-                    "color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
-                    "from": {
+                "oneOf": [
+                    # Variante A : top_left, width, height
+                    {
                         "type": "object",
-                        "properties": {"x": {"type": "number"}, "y": {"type": "number"}},
-                        "required": ["x", "y"]
+                        "properties": {
+                            "type": {"const": "rectangle"},
+                            "color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+                            "top_left": {
+                                "type": "object",
+                                "properties": {
+                                    "x": {"type": "number"},
+                                    "y": {"type": "number"}
+                                },
+                                "required": ["x", "y"],
+                                "additionalProperties": False
+                            },
+                            "width": {"type": "number", "exclusiveMinimum": 0},
+                            "height": {"type": "number", "exclusiveMinimum": 0}
+                        },
+                        "required": ["type", "color", "top_left", "width", "height"],
+                        "additionalProperties": False
                     },
-                    "to": {
+                    # Variante B : top_left, bottom_right
+                    {
                         "type": "object",
-                        "properties": {"x": {"type": "number"}, "y": {"type": "number"}},
-                        "required": ["x", "y"]
+                        "properties": {
+                            "type": {"const": "rectangle"},
+                            "color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+                            "top_left": {
+                                "type": "object",
+                                "properties": {
+                                    "x": {"type": "number"},
+                                    "y": {"type": "number"}
+                                },
+                                "required": ["x", "y"],
+                                "additionalProperties": False
+                            },
+                            "bottom_right": {
+                                "type": "object",
+                                "properties": {
+                                    "x": {"type": "number"},
+                                    "y": {"type": "number"}
+                                },
+                                "required": ["x", "y"],
+                                "additionalProperties": False
+                            }
+                        },
+                        "required": ["type", "color", "top_left", "bottom_right"],
+                        "additionalProperties": False
                     }
-                },
-                "required": ["type", "color", "from", "to"],
-                "additionalProperties": False
+                ]
             },
+
+            # POLYGON
             {
                 "type": "object",
                 "properties": {
@@ -54,7 +93,8 @@ shape_schema = {
                                 "x": {"type": "number"},
                                 "y": {"type": "number"}
                             },
-                            "required": ["x", "y"]
+                            "required": ["x", "y"],
+                            "additionalProperties": False
                         }
                     }
                 },
@@ -65,7 +105,7 @@ shape_schema = {
     }
 }
 
-def build_shape_prompt(w: int, h: int) -> str:
+def build_shape_prompt(w: int, h: int, canvas_json: str) -> str:
     return f"""
 Tu es un assistant qui génère uniquement du JSON valide, sans explication, sans texte avant ni après.
 
@@ -73,9 +113,14 @@ Le canvas a une largeur de {w} pixels et une hauteur de {h} pixels.
 Toutes les coordonnées (x, y) doivent respecter :
 0 ≤ x ≤ {w} et 0 ≤ y ≤ {h}.
 
-Retourne un tableau JSON. Chaque élément du tableau doit être un objet qui respecte **strictement** l’un de ces formats :
+Voici l'état actuel du canvas (au format JSON) :
+{canvas_json}
 
-1. Cercle :
+À partir de ce canvas, retourne un nouveau tableau JSON qui respecte les règles suivantes :
+
+1. Chaque élément est un objet qui respecte strictement l’un de ces formats :
+
+- Cercle :
 {{
   "type": "circle",
   "center": {{ "x": number, "y": number }},
@@ -83,15 +128,24 @@ Retourne un tableau JSON. Chaque élément du tableau doit être un objet qui re
   "color": "#RRGGBB"
 }}
 
-2. Rectangle :
+- Rectangle (choisir UNE seule variante) :
+Variante A :
 {{
   "type": "rectangle",
   "color": "#RRGGBB",
-  "from": {{ "x": number, "y": number }},
-  "to": {{ "x": number, "y": number }}
+  "top_left": {{ "x": number, "y": number }},
+  "width": number,
+  "height": number
+}}
+Variante B :
+{{
+  "type": "rectangle",
+  "color": "#RRGGBB",
+  "top_left": {{ "x": number, "y": number }},
+  "bottom_right": {{ "x": number, "y": number }}
 }}
 
-3. Polygone :
+- Polygone :
 {{
   "type": "polygon",
   "color": "#RRGGBB",
@@ -102,10 +156,13 @@ Retourne un tableau JSON. Chaque élément du tableau doit être un objet qui re
   ]
 }}
 
-Règles :
+2. Règles :
 - Toujours retourner un tableau JSON (même s’il ne contient qu’un seul élément).
+- L’ordre du tableau correspond à l’ordre de dessin : le premier élément est dessiné en premier (donc en dessous), puis les suivants sont dessinés par-dessus.
 - Les couleurs doivent être au format hexadécimal "#RRGGBB".
 - Toutes les coordonnées doivent tenir dans le canvas (0 ≤ x ≤ {w}, 0 ≤ y ≤ {h}).
+- Pour rectangle Variante A : width > 0, height > 0 et top_left.x + width ≤ {w}, top_left.y + height ≤ {h}.
+- Pour rectangle Variante B : bottom_right.x > top_left.x, bottom_right.y > top_left.y, et bottom_right doit tenir dans le canvas.
 - Ne pas inclure de texte hors du JSON.
-- Ne pas inclure ```json et ```
+- Ne pas inclure ```json ni ```
 """.strip()

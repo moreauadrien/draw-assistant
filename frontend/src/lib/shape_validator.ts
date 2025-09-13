@@ -7,22 +7,32 @@ const PointSchema = z.object({
 
 const CircleSchema = z.object({
     type: z.literal("circle"),
+    color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
     center: PointSchema,
     radius: z.number().positive(),
-    color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
 });
 
-const RectangleSchema = z.object({
+const RectangleWithWH = z.object({
     type: z.literal("rectangle"),
-    from: PointSchema,
-    to: PointSchema,
     color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+    top_left: PointSchema,
+    width: z.number().positive(),
+    height: z.number().positive(),
 });
+
+const RectangleWithBR = z.object({
+    type: z.literal("rectangle"),
+    color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+    top_left: PointSchema,
+    bottom_right: PointSchema,
+});
+
+const RectangleSchema = z.union([RectangleWithWH, RectangleWithBR]);
 
 const PolygonSchema = z.object({
     type: z.literal("polygon"),
-    vertices: z.array(PointSchema).min(3),
     color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+    vertices: z.array(PointSchema).min(3),
 });
 
 export const ShapeSchema = z.union([CircleSchema, RectangleSchema, PolygonSchema]);

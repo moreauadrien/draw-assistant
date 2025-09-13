@@ -14,38 +14,40 @@ function distance(a: Point, b: Point) {
 }
 
 class Rectangle extends Shape {
-    private from: Point;
-    private to: Point
+    readonly type = "rectangle"
     readonly color: string;
+    readonly top_left: Point;
+    private bottom_right: Point
 
     constructor(color: string, from: Point, to: Point) {
         super();
 
-        this.from = from;
-        this.to = to;
+        this.top_left = from;
+        this.bottom_right = to;
         this.color = color;
     }
 
     setTo(to: Point) {
-        this.to = to;
+        this.bottom_right = to;
     }
 
     draw(ctx: CanvasRenderingContext2D) {
         ctx.fillStyle = this.color;
 
-        const baseX = Math.min(this.from.x, this.to.x);
-        const baseY = Math.min(this.from.y, this.to.y);
-        const width = Math.abs(this.from.x - this.to.x);
-        const height = Math.abs(this.from.y - this.to.y);
+        const baseX = Math.min(this.top_left.x, this.bottom_right.x);
+        const baseY = Math.min(this.top_left.y, this.bottom_right.y);
+        const width = Math.abs(this.top_left.x - this.bottom_right.x);
+        const height = Math.abs(this.top_left.y - this.bottom_right.y);
 
         ctx.fillRect(baseX, baseY, width, height);
     }
 }
 
 class Circle extends Shape {
+    readonly type = "circle"
+    readonly color: string;
     readonly center: Point;
     private radius: number;
-    readonly color: string;
 
     constructor(color: string, center: Point, radius: number) {
         super();
@@ -67,8 +69,9 @@ class Circle extends Shape {
 }
 
 class Polygon extends Shape {
-    private vertices: Point[];
+    readonly type = "polygon"
     readonly color: string;
+    private vertices: Point[];
 
     constructor(color: string, vertices: Point[]) {
         if (vertices.length === 0) {
@@ -263,7 +266,12 @@ export default class DrawingManager {
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ prompt: prompt, width: this.canvas.width, height: this.canvas.height }),
+            body: JSON.stringify({
+                prompt: prompt,
+                width: this.canvas.width,
+                height: this.canvas.height,
+                current_canvas: JSON.stringify(this.shapes)
+            }),
         });
 
         const resp_json = await response.json()
@@ -282,7 +290,11 @@ export default class DrawingManager {
 
         for (const s of shapes) {
             if (s.type === "rectangle") {
-                this.shapes.push(new Rectangle(s.color, s.from, s.to))
+                if ("bottom_right" in s) {
+                    this.shapes.push(new Rectangle(s.color, s.top_left, s.bottom_right))
+                } else {
+                    this.shapes.push(new Rectangle(s.color, s.top_left, { x: s.top_left.x + s.width, y: s.top_left.y + s.height }))
+                }
             } else if (s.type === "circle") {
                 this.shapes.push(new Circle(s.color, s.center, s.radius))
             } else if (s.type === "polygon") {

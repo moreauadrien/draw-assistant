@@ -22,6 +22,7 @@ client = Mistral(api_key=api_key)
 
 class Prompt(BaseModel):
     prompt: str
+    current_canvas: str
     width: int
     height: int
 
@@ -30,13 +31,18 @@ app = FastAPI()
 
 @app.post("/api")
 async def prompt_to_draw(prompt: Prompt):
-    print(prompt)
+    try:
+        shapes = json.loads(prompt.current_canvas)
+        validate(instance=shapes, schema=utils.shape_schema)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid current_canvas")
+
     chat_response = client.chat.complete(
         model = model,
         messages = [
             {
                 "role": "system",
-                "content": utils.build_shape_prompt(prompt.width, prompt.height),
+                "content": utils.build_shape_prompt(prompt.width, prompt.height, prompt.current_canvas),
             },
             {
                 "role": "user",
@@ -46,9 +52,7 @@ async def prompt_to_draw(prompt: Prompt):
     )
 
     resp = chat_response.choices[0].message.content
-    print(resp)
 
-    shapes = ""
     if isinstance(resp, str):
         shapes = json.loads(resp)
         try:
