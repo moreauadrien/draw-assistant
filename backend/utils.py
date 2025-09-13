@@ -128,7 +128,21 @@ Voici l'état actuel du canvas (au format JSON) :
   "color": "#RRGGBB"
 }}
 
+- Polygone :
+{{
+  "type": "polygon",
+  "color": "#RRGGBB",
+  "vertices": [
+    {{ "x": number, "y": number }},
+    {{ "x": number, "y": number }},
+    ...
+  ]
+}}
+
 - Rectangle (choisir UNE seule variante) :
+Utiliser la Variante A uniquement pour dessiner des carrés (width == height).  
+Pour tout autre rectangle (width != height), utiliser la Variante B.
+
 Variante A :
 {{
   "type": "rectangle",
@@ -145,23 +159,13 @@ Variante B :
   "bottom_right": {{ "x": number, "y": number }}
 }}
 
-- Polygone :
-{{
-  "type": "polygon",
-  "color": "#RRGGBB",
-  "vertices": [
-    {{ "x": number, "y": number }},
-    {{ "x": number, "y": number }},
-    ...
-  ]
-}}
 
 2. Règles :
 - Toujours retourner un tableau JSON (même s’il ne contient qu’un seul élément).
 - L’ordre du tableau correspond à l’ordre de dessin : le premier élément est dessiné en premier (donc en dessous), puis les suivants sont dessinés par-dessus.
 - Les couleurs doivent être au format hexadécimal "#RRGGBB".
 - Toutes les coordonnées doivent tenir dans le canvas (0 ≤ x ≤ {w}, 0 ≤ y ≤ {h}).
-- Pour rectangle Variante A : width > 0, height > 0 et top_left.x + width ≤ {w}, top_left.y + height ≤ {h}.
+- Pour rectangle Variante A (carré uniquement) : width > 0, height > 0, width == height, et top_left.x + width ≤ {w}, top_left.y + height ≤ {h}.
 - Pour rectangle Variante B : bottom_right.x > top_left.x, bottom_right.y > top_left.y, et bottom_right doit tenir dans le canvas.
 - Ne pas inclure de texte hors du JSON.
 - Ne pas inclure ```json ni ```

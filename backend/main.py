@@ -1,5 +1,6 @@
 import json
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from mistralai import Mistral
@@ -29,7 +30,11 @@ class Prompt(BaseModel):
 
 app = FastAPI()
 
-@app.post("/api")
+api = APIRouter(prefix="/api")
+
+
+@api.post("")
+@api.post("/")
 async def prompt_to_draw(prompt: Prompt):
     try:
         shapes = json.loads(prompt.current_canvas)
@@ -62,3 +67,7 @@ async def prompt_to_draw(prompt: Prompt):
             raise HTTPException(status_code=500, detail="Internal error")
 
     raise HTTPException(status_code=500, detail="Internal error")
+
+app.include_router(api)
+
+app.mount("/", StaticFiles(directory="dist", html=True), name="spa")
