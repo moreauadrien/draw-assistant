@@ -1,3 +1,5 @@
+import { ShapesSchema, type Raw_Shape } from "./shape_validator";
+
 abstract class Shape {
     abstract draw(ctx: CanvasRenderingContext2D): void;
 }
@@ -250,6 +252,43 @@ export default class DrawingManager {
 
     private onContextMenu(e: MouseEvent) {
         e.preventDefault()
+    }
+
+    async sendPrompt(prompt: string) {
+        if (this.canvas === undefined) return;
+        if (prompt.trim().length === 0) return
+
+        const response = await fetch("/api", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ prompt: prompt, width: this.canvas.width, height: this.canvas.height }),
+        });
+
+        const resp_json = await response.json()
+
+        try {
+            const shapes: Raw_Shape[] = ShapesSchema.parse(resp_json);
+            this.loadJsonShapes(shapes)
+        } catch (e) {
+            console.error("Erreur de validation des 'shapes':", e);
+        }
+
+    }
+
+    private loadJsonShapes(shapes: Raw_Shape[]) {
+        this.shapes = []
+
+        for (const s of shapes) {
+            if (s.type === "rectangle") {
+                this.shapes.push(new Rectangle(s.color, s.from, s.to))
+            } else if (s.type === "circle") {
+                this.shapes.push(new Circle(s.color, s.center, s.radius))
+            } else if (s.type === "polygon") {
+                this.shapes.push(new Polygon(s.color, s.vertices))
+            }
+        }
     }
 
     setActiveTool(tool: Tool) {

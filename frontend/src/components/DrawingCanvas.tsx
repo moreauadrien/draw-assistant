@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { DrawingToolbar } from "./DrawingToolbar";
-import DrawingManager, { type Tool } from "../lib/DrawingManager.js"
+import DrawingManager from "../lib/DrawingManager.js"
+import { AIPromptBar } from "./AIPromptBar.js";
 
 export default function DrawingCanvas() {
   const canvasRef: React.Ref<HTMLCanvasElement | null> = useRef(null);
@@ -14,7 +15,6 @@ export default function DrawingCanvas() {
     }
 
     manager.setCanvas(canvas)
-
   }, [])
 
   return (
@@ -22,10 +22,12 @@ export default function DrawingCanvas() {
       <div className="relative w-screen h-screen overflow-hidden">
         <canvas id="draw_canvas" ref={canvasRef} className="absolute inset-0 w-full h-full" />
 
-        <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="pointer-events-auto">
-            <DrawingToolbar dm={manager} />
-          </div>
+        <div className="absolute top-6 left-1/2 transform -translate-x-1/2">
+          <DrawingToolbar dm={manager} />
+        </div>
+
+        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
+          <AIPromptBar dm={manager} />
         </div>
       </div>
     </>
