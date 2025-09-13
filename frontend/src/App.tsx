@@ -1,13 +1,12 @@
-import './App.css'
-import DrawingCanvas from './components/DrawingCanvas'
+import "./App.css";
+import DrawingCanvas from "./components/DrawingCanvas";
 
 function App() {
-
-  return (
-    <>
-      <DrawingCanvas />
-    </>
-  )
+    return (
+        <>
+            <DrawingCanvas />
+        </>
+    );
 }
 
-export default App
+export default App;

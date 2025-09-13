@@ -35,7 +35,11 @@ const PolygonSchema = z.object({
     vertices: z.array(PointSchema).min(3),
 });
 
-export const ShapeSchema = z.union([CircleSchema, RectangleSchema, PolygonSchema]);
+export const ShapeSchema = z.union([
+    CircleSchema,
+    RectangleSchema,
+    PolygonSchema,
+]);
 export const ShapesSchema = z.array(ShapeSchema);
 
 export type Raw_Shape = z.infer<typeof ShapeSchema>;

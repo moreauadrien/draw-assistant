@@ -7,17 +7,17 @@ abstract class Shape {
 type Point = {
     x: number;
     y: number;
-}
+};
 
 function distance(a: Point, b: Point) {
-    return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2))
+    return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
 }
 
 class Rectangle extends Shape {
-    readonly type = "rectangle"
+    readonly type = "rectangle";
     readonly color: string;
     readonly top_left: Point;
-    private bottom_right: Point
+    private bottom_right: Point;
 
     constructor(color: string, from: Point, to: Point) {
         super();
@@ -44,7 +44,7 @@ class Rectangle extends Shape {
 }
 
 class Circle extends Shape {
-    readonly type = "circle"
+    readonly type = "circle";
     readonly color: string;
     readonly center: Point;
     private radius: number;
@@ -69,7 +69,7 @@ class Circle extends Shape {
 }
 
 class Polygon extends Shape {
-    readonly type = "polygon"
+    readonly type = "polygon";
     readonly color: string;
     private vertices: Point[];
 
@@ -84,11 +84,11 @@ class Polygon extends Shape {
     }
 
     addVertex(p: Point) {
-        this.vertices.push(p)
+        this.vertices.push(p);
     }
 
     popVertex() {
-        this.vertices.pop()
+        this.vertices.pop();
     }
 
     draw(ctx: CanvasRenderingContext2D) {
@@ -103,14 +103,13 @@ class Polygon extends Shape {
             ctx.lineTo(v.x, v.y);
         }
 
-        ctx.closePath()
+        ctx.closePath();
         ctx.fill();
         ctx.stroke();
     }
 }
 
-
-export type Tool = "rectangle" | "circle" | "polygon" | null
+export type Tool = "rectangle" | "circle" | "polygon" | null;
 
 export const colors = [
     { name: "Noir", value: "#000000", class: "bg-black" },
@@ -126,14 +125,13 @@ export const colors = [
     { name: "Indigo", value: "#6366f1", class: "bg-indigo-500" },
     { name: "Emeraude", value: "#10b981", class: "bg-emerald-500" },
     { name: "Gris", value: "#6b7280", class: "bg-gray-500" },
-]
+];
 
 export default class DrawingManager {
-    private canvas: HTMLCanvasElement | undefined
-    private ctx: CanvasRenderingContext2D | undefined
-    private activeTool: Tool | null
-    private selectedColor: string
-
+    private canvas: HTMLCanvasElement | undefined;
+    private ctx: CanvasRenderingContext2D | undefined;
+    private activeTool: Tool | null;
+    private selectedColor: string;
 
     private shapes: Shape[];
 
@@ -154,7 +152,7 @@ export default class DrawingManager {
     }
 
     setCanvas(canvas: HTMLCanvasElement) {
-        this.canvas = canvas
+        this.canvas = canvas;
 
         const ctx = canvas.getContext("2d");
         if (ctx === null) {
@@ -163,14 +161,13 @@ export default class DrawingManager {
 
         this.ctx = ctx;
 
-
         this.canvas.addEventListener("mousedown", this.onMouseDown);
         this.canvas.addEventListener("mouseup", this.onMouseUp);
         this.canvas.addEventListener("mousemove", this.onMouseMove);
         this.canvas.addEventListener("contextmenu", this.onContextMenu);
         window.addEventListener("resize", this.resizeCanvas);
 
-        this.resizeCanvas()
+        this.resizeCanvas();
         window.requestAnimationFrame(this.draw);
     }
 
@@ -186,19 +183,18 @@ export default class DrawingManager {
             newShape = this.tempShape;
             if (e.type === "mousemove") {
                 this.tempShape.setTo(p);
-            } else if ((e.type === "mouseup") && (e.button === 0)) {
+            } else if (e.type === "mouseup" && e.button === 0) {
                 this.tempShape.setTo(p);
                 final = true;
             }
-
         } else if (this.tempShape instanceof Circle) {
             const radius = Math.floor(distance(this.tempShape.center, p));
             newShape = this.tempShape;
 
             if (e.type === "mousemove") {
-                this.tempShape.setRadius(radius)
-            } else if ((e.type === "mouseup") && (e.button === 0)) {
-                this.tempShape.setRadius(radius)
+                this.tempShape.setRadius(radius);
+            } else if (e.type === "mouseup" && e.button === 0) {
+                this.tempShape.setRadius(radius);
                 final = true;
             }
         } else if (this.tempShape instanceof Polygon) {
@@ -207,17 +203,16 @@ export default class DrawingManager {
             if (e.type === "mousemove") {
                 this.tempShape.popVertex();
                 this.tempShape.addVertex(p);
-            } else if ((e.type === "mouseup") && (e.button === 0)) {
+            } else if (e.type === "mouseup" && e.button === 0) {
                 this.tempShape.popVertex();
                 this.tempShape.addVertex(p);
                 this.tempShape.addVertex(p);
-            } else if ((e.type === "mouseup") && (e.button === 2)) {
+            } else if (e.type === "mouseup" && e.button === 2) {
                 this.tempShape.popVertex();
                 this.tempShape.addVertex(p);
                 final = true;
             }
         }
-
 
         if (newShape !== null) {
             if (final) {
@@ -232,7 +227,7 @@ export default class DrawingManager {
     private onMouseDown(e: MouseEvent) {
         const p = { x: e.x, y: e.y };
 
-        if ((this.tempShape === null) && (e.button === 0)) {
+        if (this.tempShape === null && e.button === 0) {
             if (this.activeTool === "polygon") {
                 this.tempShape = new Polygon(this.selectedColor, [p, p]);
             } else if (this.activeTool === "circle") {
@@ -241,7 +236,7 @@ export default class DrawingManager {
                 this.tempShape = new Rectangle(this.selectedColor, p, p);
             }
         } else {
-            this.updateTempShape(e)
+            this.updateTempShape(e);
         }
     }
 
@@ -250,16 +245,16 @@ export default class DrawingManager {
     }
 
     private onMouseMove(e: MouseEvent) {
-        this.updateTempShape(e)
+        this.updateTempShape(e);
     }
 
     private onContextMenu(e: MouseEvent) {
-        e.preventDefault()
+        e.preventDefault();
     }
 
     async sendPrompt(prompt: string) {
         if (this.canvas === undefined) return;
-        if (prompt.trim().length === 0) return
+        if (prompt.trim().length === 0) return;
 
         const response = await fetch("/api", {
             method: "POST",
@@ -270,35 +265,41 @@ export default class DrawingManager {
                 prompt: prompt,
                 width: this.canvas.width,
                 height: this.canvas.height,
-                current_canvas: JSON.stringify(this.shapes)
+                current_canvas: JSON.stringify(this.shapes),
             }),
         });
 
-        const resp_json = await response.json()
+        const resp_json = await response.json();
 
         try {
             const shapes: Raw_Shape[] = ShapesSchema.parse(resp_json);
-            this.loadJsonShapes(shapes)
+            this.loadJsonShapes(shapes);
         } catch (e) {
             console.error("Erreur de validation des 'shapes':", e);
         }
-
     }
 
     private loadJsonShapes(shapes: Raw_Shape[]) {
-        this.shapes = []
+        this.shapes = [];
 
         for (const s of shapes) {
             if (s.type === "rectangle") {
                 if ("bottom_right" in s) {
-                    this.shapes.push(new Rectangle(s.color, s.top_left, s.bottom_right))
+                    this.shapes.push(
+                        new Rectangle(s.color, s.top_left, s.bottom_right),
+                    );
                 } else {
-                    this.shapes.push(new Rectangle(s.color, s.top_left, { x: s.top_left.x + s.width, y: s.top_left.y + s.height }))
+                    this.shapes.push(
+                        new Rectangle(s.color, s.top_left, {
+                            x: s.top_left.x + s.width,
+                            y: s.top_left.y + s.height,
+                        }),
+                    );
                 }
             } else if (s.type === "circle") {
-                this.shapes.push(new Circle(s.color, s.center, s.radius))
+                this.shapes.push(new Circle(s.color, s.center, s.radius));
             } else if (s.type === "polygon") {
-                this.shapes.push(new Polygon(s.color, s.vertices))
+                this.shapes.push(new Polygon(s.color, s.vertices));
             }
         }
     }
@@ -308,7 +309,7 @@ export default class DrawingManager {
     }
 
     setSelectedColor(color: string) {
-        this.selectedColor = color
+        this.selectedColor = color;
     }
 
     clearCanvas() {
@@ -318,10 +319,8 @@ export default class DrawingManager {
     draw() {
         if (this.ctx === undefined || this.canvas === undefined) return;
 
-
         const { width: cW, height: cH } = this.canvas;
         this.ctx.clearRect(0, 0, cW, cH);
-
 
         for (const s of this.shapes) {
             s.draw(this.ctx);
@@ -335,7 +334,7 @@ export default class DrawingManager {
     }
 
     private resizeCanvas() {
-        if (this.canvas === undefined) return
+        if (this.canvas === undefined) return;
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
     }
