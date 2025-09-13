@@ -2,87 +2,71 @@ abstract class Shape {
     abstract draw(ctx: CanvasRenderingContext2D): void;
 }
 
-/*
-class Point {
-    private x: number;
-    private y: number;
-
-    constructor(x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
-
-    distance(p: Point) {
-        return Math.sqrt(Math.pow(this.x - p.x, 2) + Math.pow(this.y - p.y, 2))
-    }
-}
-*/
-
 type Point = {
     x: number;
     y: number;
 }
 
-/*
-function distance(xA: number, yA: number, xB: number, yB: number) {
-    return Math.sqrt(Math.pow(xA - xB, 2) + Math.pow(yA - yB, 2))
+function distance(a: Point, b: Point) {
+    return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2))
 }
-*/
-
 
 class Rectangle extends Shape {
-    private x: number;
-    private y: number;
-    private width: number;
-    private height: number;
-    private color: string;
+    private from: Point;
+    private to: Point
+    readonly color: string;
 
-    constructor(color: string, fX: number, fY: number, tX: number, tY: number) {
+    constructor(color: string, from: Point, to: Point) {
         super();
 
-        const baseX = Math.min(fX, tX);
-        const baseY = Math.min(fY, tY);
-        const width = Math.abs(fX - tX);
-        const height = Math.abs(fY - tY);
-
-        this.x = baseX;
-        this.y = baseY;
-        this.width = width;
-        this.height = height;
+        this.from = from;
+        this.to = to;
         this.color = color;
+    }
+
+    setTo(to: Point) {
+        this.to = to;
     }
 
     draw(ctx: CanvasRenderingContext2D) {
         ctx.fillStyle = this.color;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+
+        const baseX = Math.min(this.from.x, this.to.x);
+        const baseY = Math.min(this.from.y, this.to.y);
+        const width = Math.abs(this.from.x - this.to.x);
+        const height = Math.abs(this.from.y - this.to.y);
+
+        ctx.fillRect(baseX, baseY, width, height);
     }
 }
 
 class Circle extends Shape {
-    private x: number;
-    private y: number;
+    readonly center: Point;
     private radius: number;
-    private color: string;
+    readonly color: string;
 
-    constructor(color: string, x: number, y: number, radius: number) {
+    constructor(color: string, center: Point, radius: number) {
         super();
-        this.x = x;
-        this.y = y;
+        this.center = center;
         this.radius = radius;
         this.color = color;
+    }
+
+    setRadius(radius: number) {
+        this.radius = radius;
     }
 
     draw(ctx: CanvasRenderingContext2D) {
         ctx.fillStyle = this.color;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+        ctx.arc(this.center.x, this.center.y, this.radius, 0, 2 * Math.PI);
         ctx.fill();
     }
 }
 
 class Polygon extends Shape {
     private vertices: Point[];
-    private color: string;
+    readonly color: string;
 
     constructor(color: string, vertices: Point[]) {
         if (vertices.length === 0) {
@@ -142,25 +126,19 @@ export const colors = [
 export default class DrawingManager {
     private canvas: HTMLCanvasElement | undefined
     private ctx: CanvasRenderingContext2D | undefined
-    private isDrawing: boolean
     private activeTool: Tool | null
     private selectedColor: string
 
-    private fromCoords: [number, number] | null;
-    private toCoords: [number, number] | null;
 
     private shapes: Shape[];
 
-    private tempPolygon: Polygon | null;
+    private tempShape: Shape | null;
 
     constructor() {
-        this.isDrawing = false;
         this.activeTool = null;
         this.selectedColor = "#000000";
-        this.fromCoords = null;
-        this.toCoords = null;
         this.shapes = [];
-        this.tempPolygon = null;
+        this.tempShape = null;
 
         this.onMouseDown = this.onMouseDown.bind(this);
         this.onMouseUp = this.onMouseUp.bind(this);
@@ -191,77 +169,87 @@ export default class DrawingManager {
         window.requestAnimationFrame(this.draw);
     }
 
-    private onContextMenu(e: MouseEvent) {
-        e.preventDefault()
+    private updateTempShape(e: MouseEvent) {
+        if (this.tempShape === null) return;
 
-        console.log(this.isDrawing)
-        console.log(this.activeTool)
+        let newShape: Shape | null = null;
+        let final = false;
 
-        if (this.isDrawing && (this.activeTool === "polygon")) {
-            this.tempPolygon?.popVertex();
-            this.tempPolygon?.addVertex({ x: e.x, y: e.y })
-            if (this.tempPolygon !== null) {
-                this.shapes.push(this.tempPolygon);
+        const p = { x: e.x, y: e.y };
+
+        if (this.tempShape instanceof Rectangle) {
+            newShape = this.tempShape;
+            if (e.type === "mousemove") {
+                this.tempShape.setTo(p);
+            } else if ((e.type === "mouseup") && (e.button === 0)) {
+                this.tempShape.setTo(p);
+                final = true;
             }
-            this.tempPolygon = null;
-            this.isDrawing = false;
+
+        } else if (this.tempShape instanceof Circle) {
+            const radius = Math.floor(distance(this.tempShape.center, p));
+            newShape = this.tempShape;
+
+            if (e.type === "mousemove") {
+                this.tempShape.setRadius(radius)
+            } else if ((e.type === "mouseup") && (e.button === 0)) {
+                this.tempShape.setRadius(radius)
+                final = true;
+            }
+        } else if (this.tempShape instanceof Polygon) {
+            newShape = this.tempShape;
+
+            if (e.type === "mousemove") {
+                this.tempShape.popVertex();
+                this.tempShape.addVertex(p);
+            } else if ((e.type === "mouseup") && (e.button === 0)) {
+                this.tempShape.popVertex();
+                this.tempShape.addVertex(p);
+                this.tempShape.addVertex(p);
+            } else if ((e.type === "mouseup") && (e.button === 2)) {
+                this.tempShape.popVertex();
+                this.tempShape.addVertex(p);
+                final = true;
+            }
+        }
+
+
+        if (newShape !== null) {
+            if (final) {
+                this.tempShape = null;
+                this.shapes.push(newShape);
+            } else {
+                this.tempShape = newShape;
+            }
         }
     }
 
     private onMouseDown(e: MouseEvent) {
-        if (this.activeTool === null) return;
+        const p = { x: e.x, y: e.y };
 
-        if (this.isDrawing === false) {
-            this.isDrawing = true;
-
-            if (this.activeTool !== "polygon") {
-                this.fromCoords = [e.x, e.y]
-                this.toCoords = this.fromCoords
-            } else {
-                this.tempPolygon = new Polygon(this.selectedColor, [{ x: e.x, y: e.y }, { x: e.x, y: e.y }]);
+        if ((this.tempShape === null) && (e.button === 0)) {
+            if (this.activeTool === "polygon") {
+                this.tempShape = new Polygon(this.selectedColor, [p, p]);
+            } else if (this.activeTool === "circle") {
+                this.tempShape = new Circle(this.selectedColor, p, 0);
+            } else if (this.activeTool === "rectangle") {
+                this.tempShape = new Rectangle(this.selectedColor, p, p);
             }
         } else {
-            if (this.activeTool === "polygon") {
-                this.tempPolygon?.addVertex({ x: e.x, y: e.y })
-            }
+            this.updateTempShape(e)
         }
     }
 
-    private onMouseUp() {
-        if (this.fromCoords !== null && this.toCoords != null) {
-            const [fX, fY] = this.fromCoords;
-            const [tX, tY] = this.toCoords;
-
-
-            if (this.activeTool === "rectangle") {
-                this.shapes.push(new Rectangle(this.selectedColor, fX, fY, tX, tY))
-            }
-
-            if (this.activeTool === "circle") {
-                const centerX = Math.floor(Math.abs(fX + tX) / 2);
-                const centerY = Math.floor(Math.abs(fY + tY) / 2);
-                const radius = Math.floor(Math.abs(fX - tX) / 2);
-
-                this.shapes.push(new Circle(this.selectedColor, centerX, centerY, radius));
-            }
-
-
-
-            this.isDrawing = false;
-            this.fromCoords = null;
-            this.toCoords = null;
-        }
+    private onMouseUp(e: MouseEvent) {
+        this.updateTempShape(e);
     }
 
     private onMouseMove(e: MouseEvent) {
-        if (this.isDrawing === true) {
-            if (this.activeTool === "polygon") {
-                this.tempPolygon?.popVertex();
-                this.tempPolygon?.addVertex({ x: e.x, y: e.y })
-            } else {
-                this.toCoords = [e.x, e.y]
-            }
-        }
+        this.updateTempShape(e)
+    }
+
+    private onContextMenu(e: MouseEvent) {
+        e.preventDefault()
     }
 
     setActiveTool(tool: Tool) {
@@ -288,35 +276,10 @@ export default class DrawingManager {
             s.draw(this.ctx);
         }
 
-        if (this.tempPolygon !== null) {
-            this.tempPolygon.draw(this.ctx)
+        if (this.tempShape !== null) {
+            this.tempShape.draw(this.ctx);
         }
 
-        if (this.fromCoords !== null && this.toCoords != null) {
-            let tempShape;
-
-            if (this.activeTool === "rectangle") {
-                const [fX, fY] = this.fromCoords;
-                const [tX, tY] = this.toCoords;
-
-                tempShape = new Rectangle(this.selectedColor, fX, fY, tX, tY);
-            }
-
-            if (this.activeTool === "circle") {
-                const [fX, fY] = this.fromCoords;
-                const [tX, tY] = this.toCoords;
-
-                const centerX = Math.floor(Math.abs(fX + tX) / 2);
-                const centerY = Math.floor(Math.abs(fY + tY) / 2);
-                const radius = Math.floor(Math.abs(fX - tX) / 2);
-
-                tempShape = new Circle(this.selectedColor, centerX, centerY, radius);
-            }
-
-            if (tempShape !== undefined) {
-                tempShape.draw(this.ctx);
-            }
-        }
         window.requestAnimationFrame(this.draw);
     }
 

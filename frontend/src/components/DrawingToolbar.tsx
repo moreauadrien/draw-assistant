@@ -139,6 +139,11 @@ export function DrawingToolbar({ dm }: DrawingToolbarProps) {
               style={{ backgroundColor: selectedColor }}
             />
           </p>
+
+          {(activeTool === "polygon") && (
+            <p className="text-xs text-muted-foreground">Effectue un clic droit pour terminer la forme</p>
+          )}
+
         </div>
       )}
     </Card>
