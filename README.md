@@ -9,17 +9,16 @@
 
 ## Fonctionnalités
 
-*    **Outils de dessin** : Rectangle, Cercle, Polygone
+* 🖌️ **Outils de dessin** : Rectangle, Cercle, Polygone
 * 💬 **Prompt bar** : Interagissez avec l’IA pour modifier votre canvas
-* 📸 **Exemples illustrés** :
 
 ---
 
 ## Exemple
 
-  * Exemple : *“Dessine une maison”*
+  * Prompt : *“Dessine une maison”*
     ![Exemple maison](./screenshots/house.png)
-  * Exemple : *“Ajoute une cheminée à la maison”*
+  * Prompt : *“Ajoute une cheminée à la maison”*
     ![Exemple cheminée](./screenshots/chimney.png)
 
 ---
