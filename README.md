@@ -3,7 +3,7 @@
 **Draw Assistant** est une application web qui permet de dessiner sur un canvas avec des outils simples (rectangle, cercle, polygone) et d’interagir avec une IA pour enrichir automatiquement vos créations.
 
 🚀 Démo en ligne : [draw.adrienmoreau.fr](https://draw.adrienmoreau.fr)
-*(si le serveur renvoie des erreurs, c’est probablement dû à l’absence de crédits sur le token API Mistral — réessayez plus tard)*
+*(si le serveur renvoie des erreurs, c’est probablement dû à l’absence de crédits sur le token API Mistral - réessayez plus tard)*
 
 ---
 
