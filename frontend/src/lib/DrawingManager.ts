@@ -272,7 +272,7 @@ export default class DrawingManager {
             });
 
             if (!response.ok) {
-                toast.error(`Erreur HTTP: ${response.status}`)
+                toast.error(`Erreur HTTP: ${response.status}`);
                 return;
             }
 
@@ -281,7 +281,7 @@ export default class DrawingManager {
                 resp_json = await response.json();
             } catch (err) {
                 console.error("", err);
-                toast.error(`Erreur HTTP: ${response.status}`)
+                toast.error(`Erreur HTTP: ${response.status}`);
                 return;
             }
 
@@ -291,9 +291,8 @@ export default class DrawingManager {
             } catch (err) {
                 toast.error("Réponse JSON invalide");
             }
-
         } catch (err) {
-            toast.error("Erreur lors de l'appel API")
+            toast.error("Erreur lors de l'appel API");
         }
     }
 
