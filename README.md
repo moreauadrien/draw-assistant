@@ -23,6 +23,24 @@
 
 ---
 
+
+## ⚙️ Technologies utilisées
+
+### Frontend
+
+* **React** → gestion de l'interface utilisateur
+* **Vite** → bundler pour le build du frontend
+* **shadcn/ui** → librairie de composants pour la toolbar et la prompt bar
+* **Zod** → validation des données côté client
+
+### Backend
+
+* **FastAPI** → framework Python pour l'API backend
+* **Mistral SDK** → intégration avec le LLM pour générer/modifier des éléments du canvas
+* **jsonschema** → validation des sorties JSON du LLM afin de garantir que les objets générés respectent le bon format pour être dessinés
+
+---
+
 ## Installation & Self-hosting
 
 Vous pouvez héberger **Draw Assistant** sur votre machine avec Docker :
@@ -40,5 +58,3 @@ docker run -p 8000:8000 -e MISTRAL_TOKEN=ton_token draw-assistant
 ```
 
 L’application sera accessible sur [http://localhost:8000](http://localhost:8000).
-
----
