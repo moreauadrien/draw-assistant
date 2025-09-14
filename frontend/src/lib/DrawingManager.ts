@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { ShapesSchema, type Raw_Shape } from "./shape_validator";
 
 abstract class Shape {
@@ -253,29 +254,46 @@ export default class DrawingManager {
     }
 
     async sendPrompt(prompt: string) {
-        if (this.canvas === undefined) return;
+        if (!this.canvas) return;
         if (prompt.trim().length === 0) return;
 
-        const response = await fetch("/api", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                prompt: prompt,
-                width: this.canvas.width,
-                height: this.canvas.height,
-                current_canvas: JSON.stringify(this.shapes),
-            }),
-        });
-
-        const resp_json = await response.json();
-
         try {
-            const shapes: Raw_Shape[] = ShapesSchema.parse(resp_json);
-            this.loadJsonShapes(shapes);
-        } catch (e) {
-            console.error("Erreur de validation des 'shapes':", e);
+            const response = await fetch("/api", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    prompt,
+                    width: this.canvas.width,
+                    height: this.canvas.height,
+                    current_canvas: JSON.stringify(this.shapes),
+                }),
+            });
+
+            if (!response.ok) {
+                toast.error(`Erreur HTTP: ${response.status}`)
+                return;
+            }
+
+            let resp_json: unknown;
+            try {
+                resp_json = await response.json();
+            } catch (err) {
+                console.error("", err);
+                toast.error(`Erreur HTTP: ${response.status}`)
+                return;
+            }
+
+            try {
+                const shapes: Raw_Shape[] = ShapesSchema.parse(resp_json);
+                this.loadJsonShapes(shapes);
+            } catch (err) {
+                toast.error("Réponse JSON invalide");
+            }
+
+        } catch (err) {
+            toast.error("Erreur lors de l'appel API")
         }
     }
 
