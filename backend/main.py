@@ -1,6 +1,7 @@
 import json
 from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from mistralai import Mistral
@@ -29,9 +30,9 @@ class Prompt(BaseModel):
 
 
 app = FastAPI()
+app.add_middleware(GZipMiddleware)
 
 api = APIRouter(prefix="/api")
-
 
 @api.post("")
 @api.post("/")
